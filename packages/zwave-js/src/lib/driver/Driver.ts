@@ -4984,6 +4984,7 @@ export class Driver
 							transaction.clone(),
 						);
 
+						this._controller?.setStatus(ControllerStatus.Ready);
 						this._recoveryPhase =
 							ControllerRecoveryPhase.JammedAfterReset;
 					})
