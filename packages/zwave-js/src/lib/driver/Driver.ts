@@ -3601,9 +3601,6 @@ export class Driver
 		}
 
 		if (this._controller) {
-			// Soft-reset resets the node ID type back to 8 bit
-			this._controller["_nodeIdType"] = NodeIDType.Short;
-
 			// Soft-resetting disables any ongoing inclusion, so we need to reset
 			// the state that is tracked in the controller
 			this._controller.setInclusionState(InclusionState.Idle);
@@ -3634,8 +3631,13 @@ export class Driver
 				void this._controller?.startWatchdog();
 			}
 
-			// If desired, re-configure the controller to use 16 bit node IDs
-			void this._controller?.trySetNodeIDType(NodeIDType.Long);
+			// Re-configure the controller to use 16-bit node IDs if supported and not already enabled
+			if (
+				this._controller?.supportsLongRange
+				&& this._controller?.nodeIdType !== NodeIDType.Long
+			) {
+				await this._controller?.trySetNodeIDType(NodeIDType.Long);
+			}
 
 			// Resume sending
 			this.unpauseSendQueue();
@@ -5608,10 +5610,11 @@ export class Driver
 					await this._controller?.startWatchdog();
 				}
 
-				if (this._controller?.nodeIdType === NodeIDType.Long) {
-					// We previously used 16 bit node IDs, but the controller was reset.
-					// Remember this and try to go back to 16 bit.
-					this._controller.nodeIdType = NodeIDType.Short;
+				// Re-configure the controller to use 16-bit node IDs if supported and not already enabled
+				if (
+					this._controller?.supportsLongRange
+					&& this._controller?.nodeIdType !== NodeIDType.Long
+				) {
 					await this._controller.trySetNodeIDType(NodeIDType.Long);
 				}
 
